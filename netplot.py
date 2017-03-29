@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+__author__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
+__copyright__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
+__license__ = 'https://www.gnu.org/licenses/gpl.html'
+__revision__ = '20170329'
 
 import configparser, getopt, os, sys
 
@@ -13,8 +17,6 @@ def main():
 
     discovered_nodes_file = 'discovered_nodes.ini'
     discovered_connections_file = 'discovered_connections.ini'
-    static_nodes_file = 'static_nodes.ini'
-    static_connections_file = 'static_connections.ini'
     # Reading configuration files
     discovered_nodes = configparser.ConfigParser()
     discovered_nodes.read(discovered_nodes_file)
@@ -44,9 +46,12 @@ def main():
     print('<body>')
     print('<div id="diagramContainer">')
     for discovered_node in discovered_nodes.sections():
-        print('\t<div id="{}" class="node_container">'.format(shortensDivId(discovered_node)))
-        print('\t\t<div class="node_image"><img src="images/{}"/></div>'.format(discovered_nodes[discovered_node]['image']))
-        print('\t\t<div class="node_label">{}</div>'.format(discovered_node))
+        id = discovered_node
+        image = discovered_nodes[discovered_node]['image']
+        label = discovered_nodes[discovered_node]['label'] if discovered_nodes.has_option(id, 'label') else discovered_node
+        print('\t<div id="{}" class="node_container">'.format(id))
+        print('\t\t<div class="node_image"><img src="images/{}"/></div>'.format(image))
+        print('\t\t<div class="node_label">{}</div>'.format(label))
         print('\t</div>')
     print('</div>')
     print('<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>')

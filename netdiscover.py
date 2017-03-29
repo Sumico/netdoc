@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+__author__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
+__copyright__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
+__license__ = 'https://www.gnu.org/licenses/gpl.html'
+__revision__ = '20170329'
 
 import configparser, getopt, os, sys
 
@@ -8,7 +12,7 @@ sysName = '.1.3.6.1.2.1.1.5.0'
 cdpCacheDeviceId = '.1.3.6.1.4.1.9.9.23.1.2.1.1.6'
 cdpCacheDevicePort = '.1.3.6.1.4.1.9.9.23.1.2.1.1.7'
 cdpCachePlatform = '.1.3.6.1.4.1.9.9.23.1.2.1.1.8'
-cdpInterfaceName = '.1.3.6.1.4.1.9.9.23.1.1.1.1.6'
+ifDescr = '.1.3.6.1.2.1.2.2.1.2'
 
 def usage():
     print('Usage: {} [OPTIONS]'.format(sys.argv[0]))
@@ -48,7 +52,7 @@ def getLocal(username, password, host):
     if errorIndication or errorStatus or errorIndex:
         return None
     device = {
-        'id': str(varBinds[0][1])
+        'id': shortenHostname(str(varBinds[0][1]))
     }
     return device
 
@@ -61,7 +65,7 @@ def getNeighbors(username, password, host):
         UsmUserData(username, password, authProtocol = usmHMACSHAAuthProtocol),
         UdpTransportTarget((host, 161)),
         ContextData(),
-        ObjectType(ObjectIdentity(cdpInterfaceName)),
+        ObjectType(ObjectIdentity(ifDescr)),
         lookupMib = False,
         lexicographicMode = False
     ):
@@ -84,17 +88,23 @@ def getNeighbors(username, password, host):
             return None
         neighbor_id = int(str(varBinds[0][0]).split('.')[-2])
         neighbors.append({
-            'id': str(varBinds[0][1]),
-            'port': shortensIf(str(varBinds[1][1])),
+            'id': shortenHostname(str(varBinds[0][1])),
+            'port': shortenIf(str(varBinds[1][1])),
             'platform': str(varBinds[2][1]),
-            'local_port': shortensIf(local_port[neighbor_id]),
+            'local_port': shortenIf(local_port[neighbor_id]),
             'image': getImage(str(varBinds[2][1]))
         })
 
 
     return neighbors
 
-def shortensIf(interface_name):
+def shortenHostname(hostname):
+    import re
+    hostname = hostname.replace('.', '')
+    hostname = re.sub('\(.*$', '', hostname)
+    return hostname
+
+def shortenIf(interface_name):
     interface_name = interface_name.replace('TenGigabitEthernet', 'te')
     interface_name = interface_name.replace('GigabitEthernet', 'gi')
     interface_name = interface_name.replace('FastEthernet', 'fa')
@@ -174,6 +184,7 @@ def main():
                 # Activate node and setting attributes
                 discovered_nodes[neighbor['id']]['disabled'] = 'false'
                 discovered_nodes[neighbor['id']]['platform'] = neighbor['platform']
+                if not discovered_nodes.has_option(neighbor['id'], 'image'): discovered_nodes[neighbor['id']]['image'] = getImage(neighbor['platform'])
 
             if device['id'] < neighbor['id']:
                 source = device['id']
@@ -203,11 +214,6 @@ def main():
         discovered_nodes.write(config_fd)
     with open(discovered_connections_file, 'w') as config_fd:
         discovered_connections.write(config_fd)
-
-    print(username)
-    print(password)
-    print(hosts)
-    print(working_dir)
 
 if __name__ == "__main__":
     main()

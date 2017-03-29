@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		.node_container {
+			position: absolute;
+		}
+		.node_label {
+			position: absolute;
+      color: #000000;
+      font-family: Helvetica;
+      font-weight: bold;
+      font-size: 0.8em;
+      width: 5em;
+		}
+    .node_interface_label {
+      background-color: #9fd3db;
+      border: 2px solid #46a6b6;
+      border-radius: 8px;
+      color: #000000;
+      font-family: Helvetica;
+      font-size: 8pt;
+      font-weight: bold;
+      padding: 0px 2px 0px 2px;
+    }
+	</style>
+</head>
+<body>
+<div id="diagramContainer"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.2.9/jsplumb.min.js"></script>
+<script>
+  $(document).on('mouseup', '.node_container', function() {
+      var position = $(this).position();
+      updateNode($(this).attr('id'), position.left, position.top)
+  });
+
+  function getNodes() {
+    var deferred = $.Deferred();
+    $.ajax({
+      dataType: 'json',
+      timeout: 10000,
+      type: 'GET',
+      url: '/api/nodes'
+    }).done(function(data) {
+      deferred.resolve(data);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+      deferred.reject({
+        status: 'fail',
+        code: '500',
+        message: textStatus
+      });
+    });
+    return deferred.promise();
+  }
+
+  function updateNode(node_id, node_left, node_top) {
+    var deferred = $.Deferred();
+    form_data = {
+      'id': node_id,
+      'left': node_left,
+      'top': node_top
+    };
+    $.ajax({
+      contentType: "application/json",
+      data: JSON.stringify(form_data),
+      dataType: 'json',
+      timeout: 10000,
+      type: 'PUT',
+      url: '/api/nodes/' + node_id
+    }).done(function(data) {
+      deferred.resolve(data);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+      deferred.reject({
+        status: 'fail',
+        code: '500',
+        message: textStatus
+      });
+    });
+    return deferred.promise();
+  }
+
+  function getConnections() {
+    var deferred = $.Deferred();
+    $.ajax({
+      dataType: 'json',
+      timeout: 10000,
+      type: 'GET',
+      url: '/api/connections'
+    }).done(function(data) {
+      deferred.resolve(data);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+      deferred.reject({
+        status: 'fail',
+        code: '500',
+        message: textStatus
+      });
+    });
+    return deferred.promise();
+  }
+
+  $(document).ready(function() {
+    $.when(getNodes(), getConnections()).done(function(response_nodes, response_connections) {
+      if (response_nodes['status'] != 'success') {
+        alert('Fail to get nodes (' + response_nodes['message'] + ')');
+      } else if (response_connections['status'] != 'success') {
+        alert('Fail to get connections (' + response_connections['message'] + ')');
+      } else {
+        $('.node_label').disableSelection();
+        $.each(response_nodes['data'], function(key, value) {
+          $('#diagramContainer').append('<div id="' + value['id'] + '" class="node_container" style="left: ' + value['left'] + 'px; top: ' + value['top'] + 'px"><div class="node_image"><img src="/static/images/' + value['image'] + '"/></div><div class="node_label">' + value['label'] + '</div></div>');
+          // Align label to the center
+          node_container_width = Math.round($('#' + value['id']).width());
+          node_label_width = Math.round($('#' + value['id']).children('.node_label')[0].scrollWidth);
+          $('#' + value['id']).children('.node_label').css({left: node_container_width / 2 - node_label_width / 2});
+        });
+        jsPlumb.ready(function() {
+          jsPlumb.importDefaults({
+            Anchor: 'Continuous',
+            Connector: ['Straight'],
+            Endpoint: 'Blank'
+          });
+          jsPlumb.setContainer($('#diagramContainer'));
+          jsPlumb.draggable($('.node_container'), {grid: [10, 10]});
+          $.each(response_connections['data'], function(key, value) {
+            jsPlumb.connect({
+              source: value['source'],
+              target: value['destination'],
+              overlays: [
+                ['Label', {label: value['source_if'], location: 0.25, cssClass: 'node_interface_label'}],
+                ['Label', {label: value['destination_if'], location: 0.75, cssClass: 'node_interface_label'}]
+              ]
+            });
+          });
+        });
+      }
+    }).fail(function(response) {
+      alert('Fail to get data (' + response['message'] + ')');
+    });
+  });
+
+
+  console.log("EOF")
+</script>
+</body>
+</html>
