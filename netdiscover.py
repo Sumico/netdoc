@@ -26,7 +26,10 @@ def usage():
     print('     device host or IP address (allowed multiple times)')
 
 def getImage(platform):
+    if platform == 'AIR-WLC4402-12-K9': return 'icons/wifi_controller.png'
+    if platform == 'Cisco 1841': return 'icons/router.png'
     if platform == 'cisco 2610': return 'icons/router.png'
+    if platform == 'Cisco 3845': return 'icons/router.png'
     if platform == 'cisco AIR-CAP2702I-E-K9': return 'icons/wifi_access_point_dual_band.png'
     if platform == 'cisco AIR-LAP1142N-E-K9': return 'icons/wifi_access_point_dual_band.png'
     if platform == 'Cisco IP Phone 8945 ': return 'icons/phone_ip.png'
