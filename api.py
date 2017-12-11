@@ -184,6 +184,43 @@ def main():
                 for neighbor in neighbors:
                     remote_device_name = neighbor['remote_system_name']
                     remote_if_name = neighbor['remote_port']
+                    remote_platform = neighbor['remote_system_description']
+                    should_save = False
+                    if not device_options.has_section(remote_device_name):
+                        device_options.add_section(remote_device_name)
+                        should_save = True
+                    try:
+                        icon = device_options.get(remote_device_name, 'icon')
+                    except:
+                        if remote_platform == 'AIR-WLC4402-12-K9': icon = '/wifi_controller.png'
+                        elif remote_platform == 'Cisco 1841': icon = '/router.png'
+                        elif remote_platform == 'cisco 2610': icon = '/router.png'
+                        elif remote_platform == 'Cisco 3845': icon = '/router.png'
+                        elif remote_platform == 'cisco AIR-CAP2702I-E-K9': icon = '/wifi_access_point_dual_band.png'
+                        elif remote_platform == 'cisco AIR-LAP1142N-E-K9': icon = '/wifi_access_point_dual_band.png'
+                        elif remote_platform == 'Cisco IP Phone 8945 ': icon = '/phone_ip.png'
+                        elif remote_platform == 'Cisco IP Phone SPA504G': icon = '/phone_ip.png'
+                        elif remote_platform == 'cisco WS-C2960S-48FPS-L': icon = '/switch_l2.png'
+                        elif remote_platform == 'cisco WS-C2960X-48FPD-L': icon = '/switch_l2.png'
+                        elif remote_platform == 'cisco WS-C3750G-12S': icon = '/switch_l3.png'
+                        elif remote_platform == 'cisco WS-C3750G-24TS-1U': icon = '/switch_l3.png'
+                        elif remote_platform == 'cisco WS-C3750G-48TS': icon = '/switch_l3.png'
+                        elif remote_platform == 'cisco WS-C4500X-16': icon = '/switch_l3.png'
+                        elif remote_platform == 'CTS-CODEC-MX300 G2': icon = '/vcf_500.png'
+                        elif remote_platform == 'CTS-CODEC-MX700/MX800': icon = '/vcf_1000.png'
+                        elif remote_platform == 'DS-C9148-16P-K9': icon = '/mds_fabric_a.png'
+                        elif remote_platform == 'DS-C9148S-K9': icon = '/mds_fabric_a.png'
+                        elif remote_platform == 'FAS8060': icon = '/storage_nfs.png'
+                        elif remote_platform == 'N10-S6100': icon = '/nexus_6000.png'
+                        elif remote_platform == 'N5K-C5010P-BF': icon = '/nexus_5000.png'
+                        elif remote_platform == 'N5K-C5672UP': icon = '/nexus_5000.png'
+                        elif remote_platform == 'N77-C7706': icon = '/nexus_7000.png'
+                        elif remote_platform == 'N9K-C93180YC-EX': icon = '/nexus_9300_aci_mode.png'
+                        elif remote_platform == 'UCS-FI-6296UP': icon = '/nexus_6000.png'
+                        else: icon = 'generic.png'
+                        device_options.set(remote_device_name, 'icon', icon)
+                    if should_save:
+                        saveConfig()
                     if device_name > remote_device_name:
                         source = remote_device_name
                         source_if = remote_if_name
@@ -203,14 +240,6 @@ def main():
 
                     if not link in links:
                         links.append(link)
-
-    #try:
-    #    discovery_output = open(output_file, 'w+')
-    #    discovery_output.write(json.dumps(links))
-    #    discovery_output.close()
-    #except:
-    #    logging.error('output file is not writable ({})'.format(output_file))
-    #    sys.exit(255)
 
 if __name__ == "__main__":
     main()

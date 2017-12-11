@@ -27,34 +27,6 @@ def usage():
     print('  -p STRING  SNMPv3 password (AuthNoPriv, SHA)')
     print('  -h STRING  device host or IP address (allowed multiple times)')
 
-#def getImage(platform):
-#    if platform == 'AIR-WLC4402-12-K9': return 'icons/wifi_controller.png'
-#    if platform == 'Cisco 1841': return 'icons/router.png'
-#    if platform == 'cisco 2610': return 'icons/router.png'
-#    if platform == 'Cisco 3845': return 'icons/router.png'
-#    if platform == 'cisco AIR-CAP2702I-E-K9': return 'icons/wifi_access_point_dual_band.png'
-#    if platform == 'cisco AIR-LAP1142N-E-K9': return 'icons/wifi_access_point_dual_band.png'
-#    if platform == 'Cisco IP Phone 8945 ': return 'icons/phone_ip.png'
-#    if platform == 'Cisco IP Phone SPA504G': return 'icons/phone_ip.png'
-#    if platform == 'cisco WS-C2960S-48FPS-L': return 'icons/switch_l2.png'
-#    if platform == 'cisco WS-C2960X-48FPD-L': return 'icons/switch_l2.png'
-#    if platform == 'cisco WS-C3750G-12S': return 'icons/switch_l3.png'
-#    if platform == 'cisco WS-C3750G-24TS-1U': return 'icons/switch_l3.png'
-#    if platform == 'cisco WS-C3750G-48TS': return 'icons/switch_l3.png'
-#    if platform == 'cisco WS-C4500X-16': return 'icons/switch_l3.png'
-#    if platform == 'CTS-CODEC-MX300 G2': return 'icons/vcf_500.png'
-#    if platform == 'CTS-CODEC-MX700/MX800': return 'icons/vcf_1000.png'
-#    if platform == 'DS-C9148-16P-K9': return 'icons/mds_fabric_a.png'
-#    if platform == 'DS-C9148S-K9': return 'icons/mds_fabric_a.png'
-#    if platform == 'FAS8060': return 'icons/storage_nfs.png'
-#    if platform == 'N10-S6100': return 'icons/nexus_6000.png'
-#    if platform == 'N5K-C5010P-BF': return 'icons/nexus_5000.png'
-#    if platform == 'N5K-C5672UP': return 'icons/nexus_5000.png'
-#    if platform == 'N77-C7706': return 'icons/nexus_7000.png'
-#    if platform == 'N9K-C93180YC-EX': return 'icons/nexus_9300_aci_mode.png'
-#    if platform == 'UCS-FI-6296UP': return 'icons/nexus_6000.png'
-#    return 'icons/generic.png'
-
 def getFacts(username, password, host):
     errorIndication, errorStatus, errorIndex, varBinds = next(
         getCmd(SnmpEngine(),
