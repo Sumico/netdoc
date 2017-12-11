@@ -17,6 +17,10 @@ devices_file = 'devices.ini'
 device_options = configparser.ConfigParser()
 device_options.read(devices_file)
 
+def usage():
+    print('Usage: {} [OPTIONS]'.format(sys.argv[0]))
+    print('  -d         enable debug')
+
 def saveConfig():
     with open(devices_file, 'w') as device_fp:
         device_options.write(device_fp)
@@ -110,16 +114,15 @@ def main():
 
     # Reading options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'di:')
+        opts, args = getopt.getopt(sys.argv[1:], 'd:')
     except getopt.GetoptError as err:
-        logger.error(err)
+        logging.error(err)
+        usage()
         sys.exit(255)
 
     for opt, arg in opts:
         if opt == '-d':
             logging.basicConfig(level = logging.DEBUG)
-        elif opt == '-d':
-            base_dir = arg
         else:
             logging.error('unhandled option ({})'.format(opt))
             sys.exit(255)
