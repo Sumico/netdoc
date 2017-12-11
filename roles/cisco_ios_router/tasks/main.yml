@@ -1,0 +1,19 @@
+---
+- name: EXECUTE CISCO_IOS_ROUTER ROLE
+  connection: local
+  ios_command:
+    provider: "{{provider}}"
+    commands:
+      - "show interfaces status"
+      - "show vrf"
+      - "show ip protocols"
+      - "show ip ospf neighbor"
+      - "show ip eigrp neighbors"
+    authorize: yes
+  register: result
+- local_action: copy content="{{result.stdout[0]}}\n" dest={{repo}}/show_interfaces_status
+- local_action: copy content="{{result.stdout[1]}}\n" dest={{repo}}/show_vrf
+- local_action: copy content="{{result.stdout[2]}}\n" dest={{repo}}/show_ip_protocols
+- local_action: copy content="{{result.stdout[3]}}\n" dest={{repo}}/show_ip_ospf_neighbor
+- local_action: copy content="{{result.stdout[4]}}\n" dest={{repo}}/show_ip_eigrp_neighbors
+

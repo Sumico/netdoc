@@ -1,139 +1,39 @@
 #!/usr/bin/env python3
-""" API
-    Methods:
-    - GET /api/objects - Retrieves a list of objects
-    - GET /api/objects/1 - Retrieves a specific objects
-    - POST /api/objects - Creates a new object
-    - PUT /api/objects/1 - Edits a specific object
-    - DELETE /api/objects/1 - Deletes a specific object
-    Return codes:
-    - 200 success - Request ok
-    - 201 success - New objects has been created
-    - 400 bad request - Input request not valid
-    - 401 unauthorized - User not authenticated
-    - 403 forbidden - User authenticated but not authorized
-    - 404 fail - Url or object not found
-    - 405 fail - Method not allowed
-    - 406 fail - Not acceptable
-    - 409 fail - Object already exists, cannot create another one
-    - 422 fail - Input data missing or not valid
-    - 500 error - Server error, maybe a bug/exception or a backend/database error
-"""
 __author__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
 __copyright__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
-__license__ = 'https://www.gnu.org/licenses/gpl.html'
-__revision__ = '20170329'
+__license__ = 'https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode'
+__revision__ = '20171206'
 
-import configparser, flask, json, logging, os, random
+import configparser, flask, getopt, json, logging, os, random, sys
 
+# Default settings
+logging.basicConfig(level = logging.WARNING)
+
+# Global variables
 working_dir = os.path.dirname(os.path.abspath(__file__))
 app = flask.Flask(__name__)
-
-discovered_nodes_file = 'discovered_nodes.ini'
-discovered_nodes = configparser.ConfigParser()
-discovered_nodes.read(discovered_nodes_file)
-discovered_connections_file = 'discovered_connections.ini'
-discovered_connections = configparser.ConfigParser()
-discovered_connections.read(discovered_connections_file)
+links = []
+devices_file = 'devices.ini'
+device_options = configparser.ConfigParser()
+device_options.read(devices_file)
 
 def saveConfig():
-    with open(discovered_nodes_file, 'w') as config_fd:
-        discovered_nodes.write(config_fd)
-    with open(discovered_connections_file, 'w') as config_fd:
-        discovered_connections.write(config_fd)
-
-@app.errorhandler(400)
-def http_401(err):
-    response = {
-        'code': 400,
-        'status': 'bad request',
-        'message': str(err)
-    }
-    return flask.jsonify(response), response['code']
-
-@app.errorhandler(401)
-def http_401(err):
-    response = {
-        'code': 401,
-        'status': 'unauthorized',
-        'message': str(err)
-    }
-    return flask.jsonify(response), response['code']
-
-@app.errorhandler(403)
-def http_403(err):
-    response = {
-        'code': 403,
-        'status': 'forbidden',
-        'message': str(err)
-    }
-    return flask.jsonify(response), response['code']
-
-@app.errorhandler(404)
-def http_404(err):
-    response = {
-        'code': 404,
-        'status': 'fail',
-        'message': str(err)
-    }
-    return flask.jsonify(response), response['code']
-
-@app.errorhandler(405)
-def http_405(err):
-    response = {
-        'code': 405,
-        'status': 'fail',
-        'message': str(err)
-    }
-    return flask.jsonify(response), response['code']
-
-@app.errorhandler(409)
-def http_409(err):
-    response = {
-        'code': 409,
-        'status': 'fail',
-        'message': str(err)
-    }
-    return flask.jsonify(response), response['code']
-
-@app.errorhandler(422)
-def http_422(err):
-    response = {
-        'code': 422,
-        'status': 'fail',
-        'message': str(err)
-    }
-    return flask.jsonify(response), response['code']
-
-@app.errorhandler(Exception)
-def http_500(err):
-    import traceback
-    response = {
-        'code': 500,
-        'status': 'error',
-        'message': traceback.format_exc()
-    }
-    logging.error(err)
-    logging.error(traceback.format_exc())
-    return flask.jsonify(response), response['code']
+    with open(devices_file, 'w') as device_fp:
+        device_options.write(device_fp)
 
 @app.route('/', methods = ['GET'])
 def getPage():
     return flask.render_template('template.html', name = 'netdoc')
 
 # curl -s -D- -X GET http://127.0.0.1:5000/api/nodes
-# curl -s -D- -X GET http://127.0.0.1:5000/api/nodes/nodeid
 @app.route('/api/nodes', methods = ['GET'])
-@app.route('/api/nodes/<id>', methods = ['GET'])
-def getNodes(id = None):
+def getNodes():
     nodes = {}
-    if id and discovered_nodes.has_section(id):
-        nodes[id] = discovered_nodes[id]
-    elif id:
-        flask.abort(404)
-    else:
-        for discovered_node in discovered_nodes.sections():
-            nodes[discovered_node] = discovered_nodes[discovered_node]
+    for link in links:
+        if not link['source'] in nodes:
+            nodes[link['source']] = {}
+        if not link['destination'] in nodes:
+            nodes[link['destination']] = {}
 
     response = {
         'code': 200,
@@ -142,16 +42,32 @@ def getNodes(id = None):
     }
 
     for node in nodes:
-        label = discovered_nodes[node]['label'] if discovered_nodes.has_option(node, 'label') else discovered_nodes[node]['id']
-        left = discovered_nodes[node]['left'] if discovered_nodes.has_option(node, 'left') else random.randint(0, 10) * 10
-        top = discovered_nodes[node]['top'] if discovered_nodes.has_option(node, 'top') else random.randint(0, 10) * 10
+        # Read parameters or use defaults
+        try:
+            label = device_options.get(node, 'label')
+        except:
+            label = node.lower()
+
+        try:
+            left = device_options.get(node, 'left')
+        except:
+            left = random.randint(0, 10) * 10
+
+        try:
+            top = device_options.get(node, 'top')
+        except:
+            top = random.randint(0, 10) * 10
+
+        try:
+            icon = device_options.get(node, 'icon')
+        except:
+            icon = 'generic.png'
+
         response['data'][node] = {
-            'disabled': discovered_nodes[node]['disabled'],
-            'image': discovered_nodes[node]['image'],
-            'id': discovered_nodes[node]['id'],
+            'icon': icon,
+            'id': node,
             'label': label,
             'left': left,
-            'platform': discovered_nodes[node]['platform'],
             'top': top
         }
     return flask.jsonify(response), response['code']
@@ -159,50 +75,142 @@ def getNodes(id = None):
 # curl -s -D- -X PUT -d '{"left": 181, "top": 818"}' -H 'Content-type: application/json' http://127.0.0.1:5000/api/nodes/nodeid
 @app.route('/api/nodes/<id>', methods = ['PUT'])
 def putNode(id):
-    if not discovered_nodes.has_section(id):
-        flask.abort(404)
+    if not device_options.has_section(id):
+        device_options.add_section(id)
     data = flask.request.get_json(silent = True)
     if not data:
         flask.abort(400)
     if not 'left' in data.keys() and not 'top' in data.keys():
         flask.abort(400)
     if 'left' in data.keys():
-        discovered_nodes[id]['left'] = str(data['left'])
+        device_options[id]['left'] = str(data['left'])
     if 'top' in data.keys():
-        discovered_nodes[id]['top'] = str(data['top'])
+        device_options[id]['top'] = str(data['top'])
     saveConfig()
-    return getNodes(id)
-
-# curl -s -D- -X GET http://127.0.0.1:5000/api/connections
-# curl -s -D- -X GET http://127.0.0.1:5000/api/connections/connectionid
-@app.route('/api/connections', methods = ['GET'])
-@app.route('/api/connections/<id>', methods = ['GET'])
-def getConnections(id = None):
-    connections = {}
-    if id and discovered_connections.has_section(id):
-        connections[id] = discovered_connections[id]
-    elif id:
-        flask.abort(404)
-    else:
-        for discovered_connection in discovered_connections.sections():
-            connections[discovered_connection] = discovered_connections[discovered_connection]
-
     response = {
         'code': 200,
         'status': 'success',
-        'data': {}
     }
-
-    for connection in connections:
-        response['data'][connection] = {
-            'disabled': discovered_connections[connection]['disabled'],
-            'source': discovered_connections[connection]['source'],
-            'source_if': discovered_connections[connection]['source_if'],
-            'destination': discovered_connections[connection]['destination'],
-            'destination_if': discovered_connections[connection]['destination_if']
-        }
     return flask.jsonify(response), response['code']
 
-if __name__ == '__main__':
-    app.run(host = '0.0.0.0', port = 5000, extra_files = ['{}/{}'.format(working_dir, 'discovered_nodes.ini'), '{}/{}'.format(working_dir, 'discovered_connections.ini'), '{}/template.html'.format(working_dir)], debug = True)
+# curl -s -D- -X GET http://127.0.0.1:5000/api/connections
+@app.route('/api/connections', methods = ['GET'])
+def getConnections():
+    response = {
+        'code': 200,
+        'status': 'success',
+        'data': links
+    }
+    return flask.jsonify(response), response['code']
+
+def main():
+    # Set default
+    base_dir = '.'
+    discovered_devices = {}
+
+    # Reading options
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'di:')
+    except getopt.GetoptError as err:
+        logger.error(err)
+        sys.exit(255)
+
+    for opt, arg in opts:
+        if opt == '-d':
+            logging.basicConfig(level = logging.DEBUG)
+        elif opt == '-d':
+            base_dir = arg
+        else:
+            logging.error('unhandled option ({})'.format(opt))
+            sys.exit(255)
+
+    # Checking options and environment
+    if not os.path.isdir(base_dir):
+        logging.error('base directory does not exist ({})'.format(base_dir))
+        sys.exit(255)
+
+    # Looking for devices
+    if os.path.isdir('{}/devices'.format(base_dir)):
+        for dirname in os.listdir('{}/devices'.format(base_dir)):
+            device_dir = '{}/devices/{}'.format(base_dir, dirname)
+
+            # Reading facts
+            try:
+                facts = json.load(open('{}/facts.json'.format(device_dir)))
+            except FileNotFoundError:
+                logging.warning('missing facts for device ({})'.format(dirname))
+                continue
+            except:
+                logging.warning('cannot read facts for device ({})'.format(dirname))
+                continue
+
+            # Reading domain name
+            try:
+                domainname = open('{}/domainname.txt'.format(device_dir)).read()
+                fqdn = '{}.{}'.format(facts['ansible_facts']['ansible_net_hostname'], domainname)
+            except FileNotFoundError:
+                logging.warning('missing domain name for device ({})'.format(dirname))
+                fqdn = facts['ansible_facts']['ansible_net_hostname']
+            except:
+                logging.warning('cannot read domain name for device ({})'.format(dirname))
+                fqdn = facts['ansible_facts']['ansible_net_hostname']
+
+            # Reading CDP neighbors
+            try:
+                cdp_neighbors = json.load(open('{}/cdp_neighbors.json'.format(device_dir)))
+            except FileNotFoundError:
+                logging.warning('missing CDP neighbors for device ({})'.format(dirname))
+                cdp_neighbors = {}
+            except:
+                logging.warning('cannot read CDP neighbors for device ({})'.format(dirname))
+                cdp_neighbors = {}
+
+            # Saving data
+            discovered_devices.setdefault(fqdn, {})
+            discovered_devices[fqdn] = {
+                'facts': facts,
+                'neighbors': cdp_neighbors
+            }
+
+    # For each device
+    for device_name, device in discovered_devices.items():
+        if device['neighbors']:
+            # For each interface where a neighbor exists
+            for device_if_name, neighbors in device['neighbors'].items():
+                # For each neighbor
+                for neighbor in neighbors:
+                    remote_device_name = neighbor['remote_system_name']
+                    remote_if_name = neighbor['remote_port']
+                    if device_name > remote_device_name:
+                        source = remote_device_name
+                        source_if = remote_if_name
+                        destination = device_name
+                        destination_if = device_if_name
+                    else:
+                        source = device_name
+                        source_if = device_if_name
+                        destination = remote_device_name
+                        destination_if = remote_if_name
+                    link = {
+                        'source': source,
+                        'source_if': source_if,
+                        'destination': destination,
+                        'destination_if': destination_if
+                    }
+
+                    if not link in links:
+                        links.append(link)
+
+    #try:
+    #    discovery_output = open(output_file, 'w+')
+    #    discovery_output.write(json.dumps(links))
+    #    discovery_output.close()
+    #except:
+    #    logging.error('output file is not writable ({})'.format(output_file))
+    #    sys.exit(255)
+
+if __name__ == "__main__":
+    main()
+    app.run(host = '0.0.0.0', port = 5000, extra_files = [devices_file, 'devices/*/cdp_neighbors.json', 'templates/template.html'], debug = True)
+    sys.exit(0)
 

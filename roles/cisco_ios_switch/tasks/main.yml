@@ -1,0 +1,12 @@
+---
+- name: EXECUTE CISCO_IOS_SWITCH ROLE
+  connection: local
+  ios_command:
+    provider: "{{provider}}"
+    commands:
+      - "show vlan"
+      - "show vtp status"
+    authorize: yes
+  register: result
+- local_action: copy content="{{result.stdout[0]}}\n" dest={{repo}}/show_vlan
+- local_action: copy content="{{result.stdout[1]}}\n" dest={{repo}}/show_vtp_status

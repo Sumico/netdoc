@@ -10,17 +10,27 @@
             height: 100%;
             margin: 0px;
         }
+
+        .node_connection {
+           stroke: #346789;
+           stroke-width: 2;
+        }
+
         .node {
             position: absolute;
+            z-index: 100;
+        }
+
+        .node_image {
         }
 
         .node_label {
-            position: absolute;
-            color: #000000;
+            color: #346789;
             font-family: Helvetica;
-            font-weight: bold;
             font-size: 0.8em;
-            width: 5em;
+            font-weight: bold;
+            padding: 2px 4px 2px 4px;
+            position: absolute;
         }
 
         .node_interface_label {
@@ -28,14 +38,19 @@
             border: 2px solid #464964;
             border-radius: 8px;
             color: #ffffff;
+            direction: rtl;
             font-family: Helvetica;
-            font-size: 8pt;
+            font-size: 0.6em;
             font-weight: bold;
+            max-width: 40px;
+            overflow: hidden;
             padding: 0px 2px 0px 2px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-
-        .node_selected {
-            filter: opacity(30%);
+        .node_interface_label:hover {
+            max-width: 200px;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -196,11 +211,15 @@ $(document).ready(function() {
 
             $.each(response_nodes['data'], function(key, value) {
                 // Draw each node
-                $('#diagramContainer').append('<div id="' + value['id'] + '" class="node" style="left: ' + value['left'] + 'px; top: ' + value['top'] + 'px"><div class="node_image"><img src="/static/images/' + value['image'] + '"/></div><div class="node_label">' + value['label'] + '</div>');
+                var node_div = $('<div id="' + value['id'] + '" class="node" style="left: ' + value['left'] + 'px; top: ' + value['top'] + 'px"><div class="node_image"><img src="/static/icons/' + value['icon'] + '"/></div><div class="node_label">' + value['label'] + '</div>');
+                $('#diagramContainer').append(node_div);
                 // Align label to the center
-                node_width = Math.round($('#' + value['id']).width());
-                node_label_width = Math.round($('#' + value['id']).children('.node_label')[0].scrollWidth);
-                $('#' + value['id']).children('.node_label').css({left: node_width / 2 - node_label_width / 2});
+                node_width = Math.round(node_div.children('.node_image').width());
+                node_label_width = Math.round(node_div.children('.node_label')[0].scrollWidth);
+                console.log(node_width);
+                console.log(node_label_width);
+                console.log(node_width / 2 - node_label_width / 2);
+                node_div.children('.node_label').css({left: node_width / 2 - node_label_width / 2});
             });
 
             // Build the diagram
@@ -222,6 +241,7 @@ $(document).ready(function() {
                         jsPlumb.connect({
                             source: value['source'],
                             target: value['destination'],
+                            cssClass: 'node_connection',
                             overlays: [
                                 ['Label', {label: value['source_if'], location: 0.25, cssClass: 'node_interface_label'}],
                                 ['Label', {label: value['destination_if'], location: 0.75, cssClass: 'node_interface_label'}]
