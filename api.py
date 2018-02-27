@@ -48,6 +48,12 @@ def getNodes():
     for node in nodes:
         # Read parameters or use defaults
         try:
+            hide = device_options.getboolean(node, 'hide')
+            continue
+        except:
+            hide = False
+
+        try:
             label = device_options.get(node, 'label')
         except:
             label = node.lower()
@@ -137,26 +143,8 @@ def main():
         for dirname in os.listdir('{}/devices'.format(base_dir)):
             device_dir = '{}/devices/{}'.format(base_dir, dirname)
 
-            # Reading facts
-            try:
-                facts = json.load(open('{}/facts.json'.format(device_dir)))
-            except FileNotFoundError:
-                logging.warning('missing facts for device ({})'.format(dirname))
-                continue
-            except:
-                logging.warning('cannot read facts for device ({})'.format(dirname))
-                continue
-
-            # Reading domain name
-            try:
-                domainname = open('{}/domainname.txt'.format(device_dir)).read()
-                fqdn = '{}.{}'.format(facts['ansible_facts']['ansible_net_hostname'], domainname)
-            except FileNotFoundError:
-                logging.warning('missing domain name for device ({})'.format(dirname))
-                fqdn = facts['ansible_facts']['ansible_net_hostname']
-            except:
-                logging.warning('cannot read domain name for device ({})'.format(dirname))
-                fqdn = facts['ansible_facts']['ansible_net_hostname']
+            # Setting device name
+            fqdn = dirname.lower().split('.')[0]
 
             # Reading CDP neighbors
             try:
@@ -171,7 +159,6 @@ def main():
             # Saving data
             discovered_devices.setdefault(fqdn, {})
             discovered_devices[fqdn] = {
-                'facts': facts,
                 'neighbors': cdp_neighbors
             }
 
@@ -182,7 +169,7 @@ def main():
             for device_if_name, neighbors in device['neighbors'].items():
                 # For each neighbor
                 for neighbor in neighbors:
-                    remote_device_name = neighbor['remote_system_name']
+                    remote_device_name = neighbor['remote_system_name'].lower().split('.')[0]
                     remote_if_name = neighbor['remote_port']
                     remote_platform = neighbor['remote_system_description']
                     should_save = False
