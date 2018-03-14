@@ -37,6 +37,16 @@ class L2ConnectionTable(db.Model):
     def __repr__(self):
         return '<VLAN(source={}:{},destination={}:{})>'.format(self.source, self.source_if, self.destination, self.destination_if)
 
+class NetworkTable(db.Model):
+    __tablename__ = 'networks'
+    __mapper_args__ = {'confirm_deleted_rows': False}
+    vrf = db.Column(db.String(128), primary_key = True)
+    id = db.Column(db.String(128), primary_key = True) # 10.1.2.3/28
+    #vlan = db.relationship('VLANTable', cascade = 'save-update, merge, delete')
+    description = db.Column(db.Text)
+    def __repr__(self):
+        return '<Network(vrf={},id={})>'.format(self.vrf, self.network)
+
 class VLANTable(db.Model):
     __tablename__ = 'vlans'
     __mapper_args__ = {'confirm_deleted_rows': False}
@@ -48,13 +58,3 @@ class VLANTable(db.Model):
     description = db.Column(db.Text)
     def __repr__(self):
         return '<VLAN(site_id={},id={})>'.format(self.site_id, self.id)
-
-class NetworkTable(db.Model):
-    __tablename__ = 'networks'
-    __mapper_args__ = {'confirm_deleted_rows': False}
-    vrf = db.Column(db.String(128), primary_key = True)
-    id = db.Column(db.String(128), primary_key = True) # 10.1.2.3/28
-    #vlan = db.relationship('VLANTable', cascade = 'save-update, merge, delete')
-    description = db.Column(db.Text)
-    def __repr__(self):
-        return '<Network(vrf={},id={})>'.format(self.vrf, self.network)

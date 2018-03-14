@@ -7,6 +7,14 @@ __revision__ = '20170430'
 
 from netdoc.catalog.models import *
 
+def printableNetwork(network):
+    return {
+        'id': network.id,
+        'vrf': network.vrf,
+        'description': network.description
+    }
+
+
 def printableVLAN(vlan):
     return {
         'id': vlan.id,
