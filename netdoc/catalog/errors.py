@@ -19,5 +19,7 @@ class MyApi(Api):
             'message': message,
             'description': description
         }
+        if code == 500:
+            logging.error(err)
 
         return self.make_response(response, code)
