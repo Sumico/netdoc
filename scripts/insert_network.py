@@ -19,7 +19,7 @@ for row in ws:
         continue
     vlan_name = row[1].value
     if vlan_id < 1 or vlan_id > 4096:
-        logging.warning('invalid VLAN "{}"'.format(row[0].value))
+        logging.warning('invalid VLAN ID "{}"'.format(row[0].value))
         continue
     try:
         network = ipaddress.IPv4Network('{}/{}'.format(row[2].value, row[3].value))
