@@ -12,6 +12,8 @@ wb = load_workbook(filename = 'vlan.xlsx', data_only = True)
 ws = wb.active
 
 for row in ws:
+    if not row[0].value:
+        break
     try:
         vlan_id = int(row[0].value)
     except Exception as err:
@@ -37,6 +39,9 @@ for row in ws:
         if r.status_code != 200:
             logging.warning('adding network "{}" fails with "{}"'.format(data['id'], r.status_code))
             logging.warning(r.json())
+        else:
+            logging.warning('cannot add network "{}"'.format(data['id']))
+            logging.warning(r.json())
     except Exception as err:
         logging.warning('cannot add network "{}"'.format(data['id']))
-        logging.warning(r.json())
+        logging.warning(err)
