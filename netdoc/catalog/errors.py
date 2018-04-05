@@ -5,6 +5,7 @@ __copyright__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
 __license__ = 'https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode'
 __revision__ = '20170430'
 
+import logging
 from flask_restful import Api
 
 class MyApi(Api):
@@ -17,9 +18,7 @@ class MyApi(Api):
             'status': 'fail',
             'code': code,
             'message': message,
-            'description': description
+            'description': err
         }
-        if code == 500:
-            logging.error(err)
 
         return self.make_response(response, code)

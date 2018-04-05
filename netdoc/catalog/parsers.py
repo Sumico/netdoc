@@ -5,9 +5,11 @@ __copyright__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
 __license__ = 'https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode'
 __revision__ = '20170430'
 
-import ipaddress, logging, werkzeug.exceptions
+import ipaddress, logging, re, werkzeug.exceptions
 from flask import abort, jsonify, make_response, request
 from netdoc.catalog.models import *
+
+re_site_id = re.compile('^[0-9A-Za-z_]+$')
 
 # Generic parsers
 def parse_json():
@@ -41,6 +43,26 @@ def network_parser_post():
             abort(400, 'VRF "{}" is not valid'.format(vrf))
     else:
         args['vrf'] = 'default'
+
+    if 'description' in post_args:
+        args['description'] = parse_type(post_args['description'], 'description', str)
+        if args['description'] == '':
+            abort(400, 'description "{}" is not valid'.format(description))
+    else:
+        args['description'] = ''
+
+    return args
+
+def site_parser_post():
+    args = {}
+    post_args = parse_json()
+
+    if 'id' in post_args:
+        args['id'] = parse_type(post_args['id'], 'id', str)
+        if not re_site_id.match(args['id']):
+            abort(400, 'Site "{}" is not valid'.format(args['id']))
+    else:
+        abort(400, 'Site "id" is mandatory')
 
     if 'description' in post_args:
         args['description'] = parse_type(post_args['description'], 'description', str)

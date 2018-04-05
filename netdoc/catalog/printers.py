@@ -14,11 +14,24 @@ def printableNetwork(network):
         'description': network.description
     }
 
+def printableSite(site, summary = True):
+    data = {
+        'id': site.id,
+        'description': site.description
+    }
+    if not summary:
+        data['vlans'] = {}
+        for vlan in site.vlans:
+            data['vlans'][vlan.id] = printableVLAN(vlan)
+    return data
 
 def printableVLAN(vlan):
-    return {
+    data = {
         'id': vlan.id,
         'name': vlan.name,
         'site_id': vlan.site_id,
         'description': vlan.description
     }
+    data['networks'] = {}
+    #for
+    return data

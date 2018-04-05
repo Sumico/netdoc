@@ -22,7 +22,8 @@ class DeviceTable(db.Model):
     icon = db.Column(db.String(128)) # router.png
     tags = db.Column(db.String(128)) # ['prod', 'core']
     interfaces = db.Column(db.String(128), db.ForeignKey('interfaces.id'), db.ForeignKey('interfaces.device'))
-    # root_bridge = 
+    site_id = db.Column(db.String(128), db.ForeignKey('sites.id')) # Padova
+    # root_bridge =
     description = db.Column(db.Text)
     def __repr__(self):
         return '<Device(id={},type={})>'.format(self.id, self.type)
@@ -64,21 +65,32 @@ class L3AddressTable(db.Model):
 class NetworkTable(db.Model):
     __tablename__ = 'networks'
     __mapper_args__ = {'confirm_deleted_rows': False}
-    id = db.Column(db.String(128), primary_key = True) # 10.1.2.3/28
-    vrf = db.Column(db.String(128), primary_key = True) # vrf_a
-    vlan = db.Column(db.String(128), db.ForeignKey('vlans.site_id'), db.ForeignKey('vlans.id'))
     description = db.Column(db.Text)
+    id = db.Column(db.String(128), primary_key = True) # 10.1.2.3/28
+    vlan_id = db.Column(db.String(128), db.ForeignKey('vlans.id'), db.ForeignKey('vlans.site_id'))
+    vrf = db.Column(db.String(128), primary_key = True) # vrf_a
     def __repr__(self):
         return '<Network(vrf={},id={})>'.format(self.vrf, self.network)
+
+class SiteTable(db.Model):
+    __tablename__ = 'sites'
+    __mapper_args__ = {'confirm_deleted_rows': False}
+    description = db.Column(db.Text)
+    id = db.Column(db.String(128), primary_key = True) # site_a
+    vlans = db.relationship('VLANTable', cascade = 'save-update, merge, delete')
+    def __repr__(self):
+        return '<Site(id={})>'.format(self.id)
 
 class VLANTable(db.Model):
     __tablename__ = 'vlans'
     __mapper_args__ = {'confirm_deleted_rows': False}
+    description = db.Column(db.Text)
     id = db.Column(db.Integer, primary_key = True) # 103
     name = db.Column(db.String(128)) # DMZ
-    site_id = db.Column(db.String(128), primary_key = True) # Padova
-    networks = db.Column(db.String(128), db.ForeignKey('networks.vrf'), db.ForeignKey('networks.id'))
+    #networks = db.relationship('NetworkTable', foreign_keys = [NetworkTable.id, NetworkTable.vrf], cascade = 'save-update, merge, delete')
+    #network_id = db.Column(db.String(128), db.ForeignKey('networks.id'))
+    #vrf_id  = db.Column(db.String(128), db.ForeignKey('networks.vrf'))
+    site_id = db.Column(db.String(128), db.ForeignKey('sites.id'), primary_key = True) # Padova
     stp_root = db.Column(db.String(128), db.ForeignKey('devices.id'))
-    description = db.Column(db.Text)
     def __repr__(self):
         return '<VLAN(site_id={},id={})>'.format(self.site_id, self.id)

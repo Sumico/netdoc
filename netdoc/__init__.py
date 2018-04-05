@@ -64,10 +64,16 @@ except Exception as err:
 
 # Routing
 
+api.add_resource(Device, '/api/v1/devices', '/api/v1/devices/<string:device_id>')
+
+# curl -k -s -X GET "http://127.0.0.1:5000/api/v1/networks/vrf_a/10.0.0.0/8"
+# curl -k -s -X POST -d "{\"id\":\"10.0.0.0/8\",\"vrf\":\"vrf_a\"}" -H 'Content-type: application/json' "http://127.0.0.1:5000/api/v1/vlans"
+api.add_resource(Network, '/api/v1/networks', '/api/v1/networks/<string:vrf>', '/api/v1/networks/<string:vrf>/<string:id>/<int:mask>')
+
+# curl -k -s -X GET "http://127.0.0.1:5000/api/v1/sites"
+# curl -k -s -X POST -d "{\"id\":\"site_a\"}" -H 'Content-type: application/json' "http://127.0.0.1:5000/api/v1/sites"
+api.add_resource(Site, '/api/v1/sites', '/api/v1/sites/<string:id>')
+
 # curl -k -s -X GET "http://127.0.0.1:5000/api/v1/vlans/site_a/1"
 # curl -k -s -X POST -d "{\"id\":3,\"site_id\":\"site_a\"}" -H 'Content-type: application/json' "http://127.0.0.1:5000/api/v1/vlans"
 api.add_resource(VLAN, '/api/v1/vlans', '/api/v1/vlans/<string:site_id>', '/api/v1/vlans/<string:site_id>/<int:id>')
-
-# curl -k -s -X GET "http://127.0.0.1:5000/api/v1/networks/vrf_a/10.0.0.0%2F8"
-# curl -k -s -X POST -d "{\"id\":\"10.0.0.0/8\",\"vrf\":\"vrf_a\"}" -H 'Content-type: application/json' "http://127.0.0.1:5000/api/v1/vlans"
-api.add_resource(Network, '/api/v1/networks', '/api/v1/networks/<string:vrf>/<string:id>')
