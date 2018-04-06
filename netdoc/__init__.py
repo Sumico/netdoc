@@ -54,6 +54,7 @@ from netdoc.catalog.resources import *
 from netdoc.catalog.models import *
 
 # Creating database structure
+db_empty = False
 try:
     db.create_all()
 except Exception as err:
@@ -62,9 +63,28 @@ except Exception as err:
     logging.error(err)
     sys.exit(1)
 
+# If database is empty, let's add some needed objects
+commit = False
+if not SiteTable.query.get('default'):
+    db.session.add(SiteTable(
+        id = 'default',
+        description = 'Default site'
+    ))
+    commit = True
+if not VLANTable.query.get((0, 'default')):
+    db.session.add(VLANTable(
+        id = 0,
+        name = 'Reserved',
+        site_id = 'default',
+        description = 'Reserved for networks not bound to a VLAN'
+    ))
+    commit = True
+if commit:
+    db.session.commit()
+
 # Routing
 
-api.add_resource(Device, '/api/v1/devices', '/api/v1/devices/<string:device_id>')
+api.add_resource(Device, '/api/v1/devices', '/api/v1/devices/<string:site_id>/<string:device_id>')
 
 # curl -k -s -X GET "http://127.0.0.1:5000/api/v1/networks/vrf_a/10.0.0.0/8"
 # curl -k -s -X POST -d "{\"id\":\"10.0.0.0/8\",\"vrf\":\"vrf_a\"}" -H 'Content-type: application/json' "http://127.0.0.1:5000/api/v1/vlans"

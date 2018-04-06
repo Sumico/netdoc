@@ -44,12 +44,26 @@ def network_parser_post():
     else:
         args['vrf'] = 'default'
 
+    if 'site_id' in post_args:
+        args['site_id'] = parse_type(post_args['site_id'], 'site_id', str)
+        if args['site_id'] == '':
+            abort(400, 'Site "{}" is not valid'.format(site_id))
+    else:
+        args['site_id'] = 'default'
+
     if 'description' in post_args:
         args['description'] = parse_type(post_args['description'], 'description', str)
         if args['description'] == '':
             abort(400, 'description "{}" is not valid'.format(description))
     else:
         args['description'] = ''
+
+    if 'vlan_id' in post_args:
+        args['vlan_id'] = parse_type(post_args['vlan_id'], 'vlan_id', int)
+        if args['vlan_id'] < 1 or args['vlan_id'] > 4096:
+            abort(400, 'VLAN "{}" is not valid'.format(id))
+    else:
+        args['vlan_id'] = 0
 
     return args
 

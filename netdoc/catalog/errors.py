@@ -10,9 +10,15 @@ from flask_restful import Api
 
 class MyApi(Api):
     def handle_error(self, err):
-        code = getattr(err, 'code', 500)  # Gets code or set default
-        message = getattr(err, 'name', 'Internal Server Error')  # Gets nane or set default
-        description = getattr(err, 'description', 'The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application.')  # Gets description or set defailt
+        try:
+            code = getattr(err, 'code', 500)  # Gets code or set default
+            message = getattr(err, 'name', 'Internal Server Error')  # Gets nane or set default
+            description = getattr(err, 'description', 'The server encountered an internal error and was unable to complete your request.  Either the server is overloaded or there is an error in the application.')  # Gets description or set defailt
+        except:
+            code = 500
+            message = 'Internal Server Error'
+            description = err
+            pass
 
         response = {
             'status': 'fail',

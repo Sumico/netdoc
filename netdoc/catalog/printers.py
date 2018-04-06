@@ -11,6 +11,8 @@ def printableNetwork(network):
     return {
         'id': network.id,
         'vrf': network.vrf,
+        'site_id': network.site_id,
+        'vlan_id': network.vlan_id,
         'description': network.description
     }
 
@@ -33,5 +35,6 @@ def printableVLAN(vlan):
         'description': vlan.description
     }
     data['networks'] = {}
-    #for
+    for network in vlan.networks:
+        data['networks'][network.id] = printableNetwork(network)
     return data

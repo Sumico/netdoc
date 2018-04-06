@@ -67,7 +67,8 @@ class NetworkTable(db.Model):
     __mapper_args__ = {'confirm_deleted_rows': False}
     description = db.Column(db.Text)
     id = db.Column(db.String(128), primary_key = True) # 10.1.2.3/28
-    vlan_id = db.Column(db.String(128), db.ForeignKey('vlans.id'), db.ForeignKey('vlans.site_id'))
+    site_id = db.Column(db.String(128), db.ForeignKey('vlans.site_id'))
+    vlan_id = db.Column(db.String(128), db.ForeignKey('vlans.id'))
     vrf = db.Column(db.String(128), primary_key = True) # vrf_a
     def __repr__(self):
         return '<Network(vrf={},id={})>'.format(self.vrf, self.network)
@@ -87,10 +88,8 @@ class VLANTable(db.Model):
     description = db.Column(db.Text)
     id = db.Column(db.Integer, primary_key = True) # 103
     name = db.Column(db.String(128)) # DMZ
-    #networks = db.relationship('NetworkTable', foreign_keys = [NetworkTable.id, NetworkTable.vrf], cascade = 'save-update, merge, delete')
-    #network_id = db.Column(db.String(128), db.ForeignKey('networks.id'))
-    #vrf_id  = db.Column(db.String(128), db.ForeignKey('networks.vrf'))
     site_id = db.Column(db.String(128), db.ForeignKey('sites.id'), primary_key = True) # Padova
     stp_root = db.Column(db.String(128), db.ForeignKey('devices.id'))
+    networks = db.relationship('NetworkTable', primaryjoin = 'and_(NetworkTable.site_id == VLANTable.site_id, NetworkTable.vlan_id == VLANTable.id)', cascade = 'save-update, merge, delete')
     def __repr__(self):
         return '<VLAN(site_id={},id={})>'.format(self.site_id, self.id)

@@ -32,7 +32,8 @@ for row in ws:
     # Adding network
     data = {
         'vrf': 'default',
-        'id': str(network.with_prefixlen)
+        'id': str(network.with_prefixlen),
+        'vlan_id': vlan_id
     }
     try:
         r = requests.post('http://localhost:5000/api/v1/networks', json = data)

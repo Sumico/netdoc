@@ -51,6 +51,7 @@ def loadConfig(app_root):
         need_to_save = True
     if not config.has_option('app', 'database_uri'):
         config['app']['database_uri'] = 'sqlite:///{}/database.sdb'.format(os.path.dirname(config_file))
+        #config['app']['database_uri'] = 'mysql://root:eve-ng@192.168.102.130/netdoc'.format(os.path.dirname(config_file))
         need_to_save = True
 
     if need_to_save:

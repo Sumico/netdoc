@@ -128,11 +128,13 @@ class Network(Resource):
     def post(self):
         args = network_parser_post()
 
-        if NetworkTable.query.get((args['vrf'], args['id'])):
+        if NetworkTable.query.get((args['id'], args['vrf'])):
             abort(409, 'Network "{}" already exists under VRF "{}"'.format(args['id'], args['vrf']))
         network = NetworkTable(
             id = args['id'],
             vrf = args['vrf'],
+            site_id = args['site_id'],
+            vlan_id = args['vlan_id'],
             description = args['description']
         )
         db.session.add(network)
@@ -187,7 +189,7 @@ class Site(Resource):
             id = args['id'],
             description = args['description']
         )
-        db.session.add(site )
+        db.session.add(site)
         db.session.commit()
 
         return {
