@@ -30,6 +30,7 @@ def main():
         device_info['facts'] = device.get_facts()
         device_info['interfaces'] = device.get_interfaces()
         device_info['interfaces_ip'] = device.get_interfaces_ip()
+        device_info['get_arp_table'] = device.get_arp_table()
         device_info['mac_address_table'] = device.get_mac_address_table()
         device_info['lldp_neighbors'] = device.get_lldp_neighbors_detail()
         device.close()

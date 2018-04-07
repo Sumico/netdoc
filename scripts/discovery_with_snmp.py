@@ -14,6 +14,7 @@ cdpCacheDeviceId = '.1.3.6.1.4.1.9.9.23.1.2.1.1.6'
 cdpCacheDevicePort = '.1.3.6.1.4.1.9.9.23.1.2.1.1.7'
 cdpCachePlatform = '.1.3.6.1.4.1.9.9.23.1.2.1.1.8'
 ifDescr = '.1.3.6.1.2.1.2.2.1.2'
+vtpVlanName = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4.1'
 
 def getFacts(host, SNMPAuth):
     output = {}
@@ -24,16 +25,16 @@ def getFacts(host, SNMPAuth):
                 UdpTransportTarget((host, 161)),
                 ContextData(),
                 ObjectType(ObjectIdentity(sysName)),
-                ObjectType(ObjectIdentity(ifDescr)),
                 lookupMib = False,
                 lexicographicMode = False
             )
         )
         if errorIndication or errorStatus or errorIndex:
-            logger.error('cannot query SNMP host "{}"'.format(host))
-            sys.exit(255)
+            logger.debug('error quering SNMP host "{}" for sysName'.format(host))
+            return {}
     except Exception as err:
-        logger.error('cannot query SNMP host "{}"'.format(host), exc_info = True)
+        logger.debug('cannot query SNMP host "{}" for sysName'.format(host), exc_info = False)
+        return {}
 
     output =  {
         'uptime': None,
@@ -60,16 +61,16 @@ def getInterfaces(host, SNMPAuth):
             lexicographicMode = False
         ):
             if errorIndication or errorStatus or errorIndex:
-                logger.error('cannot query SNMP host "{}"'.format(host))
-                sys.exit(255)
+                logger.debug('error quering SNMP host "{}" for ifDescr'.format(host))
+                return {}
             interfaces[int(str(varBinds[0][0]).split('.')[-1])] = str(varBinds[0][1])
     except Exception as err:
-        logger.error('cannot query SNMP host "{}"'.format(host), exc_info = True)
+        logger.debug('cannot query SNMP host "{}" for ifDescr'.format(host), exc_info = False)
+        return {}
 
     return interfaces
 
 def getCDPNeighbors(host, SNMPAuth, local_interfaces):
-    # TODO: add multiple neighbors under a single interface
     neighbors = {}
     local_port = {}
     try:
@@ -85,8 +86,8 @@ def getCDPNeighbors(host, SNMPAuth, local_interfaces):
             lexicographicMode = False
         ):
             if errorIndication or errorStatus or errorIndex:
-                logger.error('cannot query SNMP host "{}"'.format(host))
-                sys.exit(255)
+                logger.debug('error quering SNMP host "{}" for CDP data.format(host))
+                return {}
             neighbor_id = int(str(varBinds[0][0]).split('.')[-2])
             neighbors.setdefault(local_interfaces[neighbor_id], [])
             neighbors[local_interfaces[neighbor_id]].append({
@@ -96,9 +97,32 @@ def getCDPNeighbors(host, SNMPAuth, local_interfaces):
                 'remote_system_description': str(varBinds[2][1])
             })
     except Exception as err:
-        logger.error('cannot query SNMP host "{}"'.format(host), exc_info = True)
+        logger.debug('cannot query SNMP host "{}" for CDP data'.format(host), exc_info = False)
+        return {}
 
     return neighbors
+
+def getVLANs(host, SNMPAuth):
+    vlans = {}
+    try:
+        for (errorIndication, errorStatus, errorIndex, varBinds) in nextCmd(
+            SnmpEngine(),
+            SNMPAuth,
+            UdpTransportTarget((host, 161)),
+            ContextData(),
+            ObjectType(ObjectIdentity(vtpVlanName)),
+            lookupMib = False,
+            lexicographicMode = False
+        ):
+            if errorIndication or errorStatus or errorIndex:
+                logger.debug('error quering SNMP host "{}" for vtpVlanName'.format(host))
+                return {}
+            vlans[int(str(varBinds[0][0]).split('.')[-1])] = str(varBinds[0][1])
+    except Exception as err:
+        logger.debug('cannot query SNMP host "{}" for vtpVlanName'.format(host), exc_info = False)
+        return {}
+
+    return vlans
 
 def main():
     # Reading options
@@ -162,12 +186,23 @@ def main():
             continue
 
         logger.debug('connecting to "{}"'.format(host.vars['ansible_host']))
-        device_info['facts'] = getFacts(host.vars['ansible_host'], SNMPAuth)
+        facts = getFacts(host.vars['ansible_host'], SNMPAuth)
         local_interfaces = getInterfaces(host.vars['ansible_host'], SNMPAuth)
-        for interface_id, interface_name in local_interfaces.items():
-            if interface_name not in ignore_snmp_interfaces:
-                device_info['facts']['interface_list'].append(interface_name)
-        device_info['cdp_neighbors'] = getCDPNeighbors(host.vars['ansible_host'], SNMPAuth, local_interfaces)
+        cdp_neighbors = getCDPNeighbors(host.vars['ansible_host'], SNMPAuth, local_interfaces)
+        vlans = getVLANs(host.vars['ansible_host'], SNMPAuth)
+
+        if facts and local_interfaces:
+            device_info['facts'] = facts
+            for interface_id, interface_name in local_interfaces.items():
+                if interface_name not in ignore_snmp_interfaces:
+                    device_info['facts']['interface_list'].append(interface_name)
+        else:
+            logger.error('skipping not respondig host "{}"'.format(host.vars['ansible_host']))
+            continue
+        if cdp_neighbors:
+            device_info['cdp_neighbors'] = cdp_neighbors
+        if vlans:
+            device_info['vlans'] = vlans
 
         writeDeviceInfo(device_info, '{}/{}'.format(working_dir, device_info['facts']['hostname'].lower()))
 
