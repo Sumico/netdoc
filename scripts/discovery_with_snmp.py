@@ -86,7 +86,7 @@ def getCDPNeighbors(host, SNMPAuth, local_interfaces):
             lexicographicMode = False
         ):
             if errorIndication or errorStatus or errorIndex:
-                logger.debug('error quering SNMP host "{}" for CDP data.format(host))
+                logger.debug('error quering SNMP host "{}" for CDP data'.format(host))
                 return {}
             neighbor_id = int(str(varBinds[0][0]).split('.')[-2])
             neighbors.setdefault(local_interfaces[neighbor_id], [])
