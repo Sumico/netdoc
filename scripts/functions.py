@@ -37,7 +37,7 @@ def checkOpts():
             logger.setLevel(logging.DEBUG)
         elif opt == '-i':
             inventory_file = arg
-            working_dir = '{}/working/{}'.format(os.path.dirname(os.path.abspath(arg)), os.environ.get('NETDOC_FOLDER', 'default'))
+            working_dir = '{}/working/{}/devices'.format(os.path.dirname(os.path.abspath(arg)), os.environ.get('NETDOC_FOLDER', 'default'))
         else:
             logger.error('unhandled option ({})'.format(opt))
             usage()

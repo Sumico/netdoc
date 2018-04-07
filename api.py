@@ -10,10 +10,10 @@ import configparser, flask, getopt, json, logging, os, random, sys
 logging.basicConfig(level = logging.WARNING)
 
 # Global variables
-working_dir = os.path.dirname(os.path.abspath(__file__))
+working_dir = '{}/working/{}'.format(os.path.dirname(os.path.abspath(__file__)), os.environ.get('NETDOC_FOLDER', 'default'))
 app = flask.Flask(__name__)
 links = []
-devices_file = 'devices.ini'
+devices_file = '{}/devices.ini'.format(working_dir)
 device_options = configparser.ConfigParser()
 device_options.read(devices_file)
 
@@ -115,7 +115,6 @@ def getConnections():
 
 def main():
     # Set default
-    base_dir = '.'
     discovered_devices = {}
 
     # Reading options
@@ -134,14 +133,14 @@ def main():
             sys.exit(255)
 
     # Checking options and environment
-    if not os.path.isdir(base_dir):
-        logging.error('base directory does not exist ({})'.format(base_dir))
+    if not os.path.isdir(working_dir):
+        logging.error('base directory does not exist ({})'.format(working_dir))
         sys.exit(255)
 
     # Looking for devices
-    if os.path.isdir('{}/devices'.format(base_dir)):
-        for dirname in os.listdir('{}/devices'.format(base_dir)):
-            device_dir = '{}/devices/{}'.format(base_dir, dirname)
+    if os.path.isdir('{}/devices'.format(working_dir)):
+        for dirname in os.listdir('{}/devices'.format(working_dir)):
+            device_dir = '{}/devices/{}'.format(working_dir, dirname)
 
             # Setting device name
             fqdn = dirname.lower().split('.')[0]
@@ -179,31 +178,33 @@ def main():
                     try:
                         icon = device_options.get(remote_device_name, 'icon')
                     except:
-                        if remote_platform == 'AIR-WLC4402-12-K9': icon = '/wifi_controller.png'
-                        elif remote_platform == 'Cisco 1841': icon = '/router.png'
-                        elif remote_platform == 'cisco 2610': icon = '/router.png'
-                        elif remote_platform == 'Cisco 3845': icon = '/router.png'
-                        elif remote_platform == 'cisco AIR-CAP2702I-E-K9': icon = '/wifi_access_point_dual_band.png'
-                        elif remote_platform == 'cisco AIR-LAP1142N-E-K9': icon = '/wifi_access_point_dual_band.png'
-                        elif remote_platform == 'Cisco IP Phone 8945 ': icon = '/phone_ip.png'
-                        elif remote_platform == 'Cisco IP Phone SPA504G': icon = '/phone_ip.png'
-                        elif remote_platform == 'cisco WS-C2960S-48FPS-L': icon = '/switch_l2.png'
-                        elif remote_platform == 'cisco WS-C2960X-48FPD-L': icon = '/switch_l2.png'
-                        elif remote_platform == 'cisco WS-C3750G-12S': icon = '/switch_l3.png'
-                        elif remote_platform == 'cisco WS-C3750G-24TS-1U': icon = '/switch_l3.png'
-                        elif remote_platform == 'cisco WS-C3750G-48TS': icon = '/switch_l3.png'
-                        elif remote_platform == 'cisco WS-C4500X-16': icon = '/switch_l3.png'
-                        elif remote_platform == 'CTS-CODEC-MX300 G2': icon = '/vcf_500.png'
-                        elif remote_platform == 'CTS-CODEC-MX700/MX800': icon = '/vcf_1000.png'
-                        elif remote_platform == 'DS-C9148-16P-K9': icon = '/mds_fabric_a.png'
-                        elif remote_platform == 'DS-C9148S-K9': icon = '/mds_fabric_a.png'
-                        elif remote_platform == 'FAS8060': icon = '/storage_nfs.png'
-                        elif remote_platform == 'N10-S6100': icon = '/nexus_6000.png'
-                        elif remote_platform == 'N5K-C5010P-BF': icon = '/nexus_5000.png'
-                        elif remote_platform == 'N5K-C5672UP': icon = '/nexus_5000.png'
-                        elif remote_platform == 'N77-C7706': icon = '/nexus_7000.png'
-                        elif remote_platform == 'N9K-C93180YC-EX': icon = '/nexus_9300_aci_mode.png'
-                        elif remote_platform == 'UCS-FI-6296UP': icon = '/nexus_6000.png'
+                        if remote_platform == 'AIR-WLC4402-12-K9': icon = 'wifi_controller.png'
+                        elif remote_platform == 'Cisco 1841': icon = 'router.png'
+                        elif remote_platform == 'cisco 2610': icon = 'router.png'
+                        elif remote_platform == 'Cisco 3845': icon = 'router.png'
+                        elif remote_platform == 'Linux Unix': icon = 'router.png'
+                        elif remote_platform == 'cisco AIR-CAP2702I-E-K9': icon = 'wifi_access_point_dual_band.png'
+                        elif remote_platform == 'cisco AIR-LAP1142N-E-K9': icon = 'wifi_access_point_dual_band.png'
+                        elif remote_platform == 'Cisco IP Phone 8945 ': icon = 'phone_ip.png'
+                        elif remote_platform == 'Cisco IP Phone SPA504G': icon = 'phone_ip.png'
+                        elif remote_platform == 'cisco WS-C2960S-48FPS-L': icon = 'switch_l2.png'
+                        elif remote_platform == 'cisco WS-C2960X-48FPD-L': icon = 'switch_l2.png'
+                        elif remote_platform == 'cisco WS-C3750G-12S': icon = 'switch_l3.png'
+                        elif remote_platform == 'cisco WS-C3750G-24TS-1U': icon = 'switch_l3.png'
+                        elif remote_platform == 'cisco WS-C3750G-48TS': icon = 'switch_l3.png'
+                        elif remote_platform == 'cisco WS-C4500X-16': icon = 'switch_l3.png'
+                        elif remote_platform == 'Cisco IOSv': icon = 'switch_l3.png'
+                        elif remote_platform == 'CTS-CODEC-MX300 G2': icon = 'vcf_500.png'
+                        elif remote_platform == 'CTS-CODEC-MX700/MX800': icon = 'vcf_1000.png'
+                        elif remote_platform == 'DS-C9148-16P-K9': icon = 'mds_fabric_a.png'
+                        elif remote_platform == 'DS-C9148S-K9': icon = 'mds_fabric_a.png'
+                        elif remote_platform == 'FAS8060': icon = 'storage_nfs.png'
+                        elif remote_platform == 'N10-S6100': icon = 'nexus_6000.png'
+                        elif remote_platform == 'N5K-C5010P-BF': icon = 'nexus_5000.png'
+                        elif remote_platform == 'N5K-C5672UP': icon = 'nexus_5000.png'
+                        elif remote_platform == 'N77-C7706': icon = 'nexus_7000.png'
+                        elif remote_platform == 'N9K-C93180YC-EX': icon = 'nexus_9300_aci_mode.png'
+                        elif remote_platform == 'UCS-FI-6296UP': icon = 'nexus_6000.png'
                         else: icon = 'generic.png'
                         device_options.set(remote_device_name, 'icon', icon)
                     if should_save:
@@ -232,4 +233,3 @@ if __name__ == "__main__":
     main()
     app.run(host = '0.0.0.0', port = 5000, extra_files = [devices_file, 'devices/*/cdp_neighbors.json', 'templates/template.html'], debug = True)
     sys.exit(0)
-
