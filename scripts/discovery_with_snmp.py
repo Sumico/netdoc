@@ -69,6 +69,7 @@ def getInterfaces(host, SNMPAuth):
     return interfaces
 
 def getCDPNeighbors(host, SNMPAuth, local_interfaces):
+    # TODO: add multiple neighbors under a single interface
     neighbors = {}
     local_port = {}
     try:
