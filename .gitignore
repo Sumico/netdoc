@@ -6,3 +6,5 @@
 /devices.ini*
 /devices/
 /working
+
+!hosts-example
