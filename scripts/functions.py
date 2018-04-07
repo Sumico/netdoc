@@ -9,47 +9,54 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.inventory.manager import InventoryManager
 from ansible.vars.manager import VariableManager
 
+logging.basicConfig(level = logging.WARNING)
+logger = logging.getLogger(__name__)
+
+ignore_snmp_interfaces = [
+    'Null0',
+    'VoIP-Null0'
+]
+
 def usage():
     print('Usage: {} [OPTIONS]'.format(sys.argv[0]))
     print('  -i STRING  inventory file')
     print('  -d         enable debug')
+    sys.exit(1)
 
 def checkOpts():
+    inventory_file = None
     # Reading options
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'di:')
     except getopt.GetoptError as err:
-        logging.error(err)
+        logger.error('cannot parse options', exc_info = True)
         usage()
-        sys.exit(255)
 
     for opt, arg in opts:
         if opt == '-d':
-            logging.basicConfig(level = logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
         elif opt == '-i':
             inventory_file = arg
             working_dir = '{}/working/default'.format(os.path.dirname(os.path.abspath(arg)))
         else:
-            logging.error('unhandled option ({})'.format(opt))
+            logger.error('unhandled option ({})'.format(opt))
             usage()
-            sys.exit(255)
+            sys.exit(1)
 
     # Checking options and environment
     if not inventory_file:
-        logging.error('inventory file not specified')
-        sys.exit(255)
+        logger.error('inventory file not specified')
+        usage()
     if not os.path.isfile(inventory_file):
-        logging.error('inventory file "{}" does not exist'.format(inventory_file))
-        sys.exit(255)
+        logger.error('inventory file "{}" does not exist'.format(inventory_file))
+        sys.exit(1)
 
     # Loading Ansible inventory
     ansible_loader = DataLoader()
     try:
         ansible_inventory = InventoryManager(loader = ansible_loader, sources = inventory_file)
     except Exception as err:
-        logging.error('cannot read inventory file "{}"'.format(inventory_file))
-        logging.error(err)
-        sys.exit(255)
+        logger.error('cannot read inventory file "{}"'.format(inventory_file), exc_info = True)
     variable_manager = VariableManager(loader = ansible_loader, inventory = ansible_inventory)
     return ansible_inventory.get_hosts(), working_dir
 
@@ -58,15 +65,11 @@ def writeDeviceInfo(device_info, path):
         try:
             os.makedirs(path, exist_ok = True)
         except Exception as err:
-            logging.error('cannot create directory "{}"'.format(path))
-            logging.error(err)
-            sys.exit(1)
+            logger.error('cannot create directory "{}"'.format(path), exc_info = True)
         try:
             output = open('{}/{}.json'.format(path, key), 'w+')
             output.write(json.dumps(value))
             output.close()
         except Exception as err:
-            logging.error('cannot write "{}/{}.json"'.format(path, key))
-            logging.error(err)
-            sys.exit(1)
+            logger.error('cannot write "{}/{}.json"'.format(path, key), exc_info = True)
     return True

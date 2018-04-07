@@ -4,18 +4,10 @@ __copyright__ = 'Andrea Dainese <andrea.dainese@gmail.com>'
 __license__ = 'https://www.gnu.org/licenses/gpl.html'
 __revision__ = '20170329'
 
-import json, logging, napalm
+import napalm
 from functions import *
 
-# Default settings
-logging.basicConfig(level = logging.WARNING)
-
 def main():
-    # Set default
-    inventory_file = None
-    username = None
-    password = None
-
     # Reading options
     hosts, working_dir = checkOpts()
 
@@ -28,10 +20,10 @@ def main():
             ansible_password = host.vars['ansible_password']
             napalm_driver = host.vars['napalm_driver']
         except Exception as err:
-            logging.warning('skipping host "{}" because ansible_host, ansible_username, ansible_password and/or napalm_driver are not set in inventory file'.format(host.vars['ansible_host']))
+            logger.warning('skipping host "{}" because ansible_host, ansible_username, ansible_password and/or napalm_driver are not set in inventory file'.format(host.vars['ansible_host']))
             continue
 
-        logging.debug('connecting to "{}"'.format(host.vars['ansible_host']))
+        logger.debug('connecting to "{}"'.format(host.vars['ansible_host']))
         driver = napalm.get_network_driver(napalm_driver)
         device = driver(hostname = ansible_host, username = ansible_username, password = ansible_password, optional_args = {'port': 22})
         device.open()
@@ -40,6 +32,7 @@ def main():
         device_info['interfaces_ip'] = device.get_interfaces_ip()
         device_info['mac_address_table'] = device.get_mac_address_table()
         device_info['lldp_neighbors'] = device.get_lldp_neighbors_detail()
+        device.close()
 
         writeDeviceInfo(device_info, '{}/{}'.format(working_dir, device_info['facts']['hostname'].lower()))
 
